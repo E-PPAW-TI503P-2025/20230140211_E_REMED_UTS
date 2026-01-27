@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>User Panel - Pinjam Buku</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Decorative background */
+        body::before {
+            content: "📖";
+            position: fixed;
+            font-size: 250px;
+            opacity: 0.03;
+            bottom: -50px;
+            left: -50px;
+            pointer-events: none;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Header Section */
+        .header-wrapper {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 25px 30px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .welcome-section::before {
+            content: "👤";
+            font-size: 40px;
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(20deg); }
+            75% { transform: rotate(-20deg); }
+        }
+
+        #welcome {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: auto;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.6);
+        }
+
+        /* Main Container */
+        .container { 
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card { 
+            background: rgba(255, 255, 255, 0.98);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            font-size: 22px;
+            color: #2d3748;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #00b4db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Map Styling */
+        #map { 
+            height: 300px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #00b4db;
+            box-shadow: 0 5px 15px rgba(0, 180, 219, 0.3);
+            overflow: hidden;
+        }
+
+        /* Input Styling */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        input { 
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus { 
+            border-color: #00b4db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 180, 219, 0.1);
+        }
+
+        /* Button Styling */
+        .btn-small {
+            width: auto;
+            min-width: 80px;
+            padding: 0 15px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-auto { background: #00b4db; color: white; }
+        .btn-demo { background: #636e72; color: white; }
+
+        .btn-pinjam { 
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            margin-top: 10px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+        }
+
+        /* Table Styling */
+        .table-wrapper {
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; position: sticky; top: 0; }
+
+        .stock-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stock-available { background: #c6f6d5; color: #2f855a; }
+        .stock-out { background: #fed7d7; color: #c53030; }
+
+        .info-box {
+            background: #d4f1f4;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00b4db;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-wrapper">
+        <div class="welcome-section">
+            <h2 id="welcome">Memuat Profil...</h2>
+        </div>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h3>📍 Lokasi Peminjaman</h3>
+            <div class="info-box">
+                <strong>💡 Tip:</strong> Klik peta untuk pilih lokasi, atau gunakan tombol <strong>Auto</strong> untuk lacak GPS otomatis.
+            </div>
+
+            <div id="map"></div>
+            
+            <div class="input-group">
+                <label>ID Buku</label>
+                <input type="number" id="bookId" placeholder="ID buku dari tabel sebelah...">
+            </div>
+            
+            <div class="input-group">
+                <label>Latitude</label>
+                <div class="flex-row">
+                    <input type="text" id="lat" placeholder="Klik peta/Auto" readonly>
+                    <button type="button" class="btn-small btn-auto" onclick="getLocation()">📍 Auto</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label>Longitude</label>
+                <div class="flex-row">
+                    <input type="text" id="lon" placeholder="Klik peta/Auto" readonly>
+                    <button type="button" class="btn-small btn-demo" onclick="setDemoLocation()">🧪 Demo</button>
+                </div>
+            </div>
+
+            <button class="btn-pinjam" onclick="borrowBook()">📚 Pinjam Buku Sekarang</button>
+        </div>
+
+        <div class="card">
+            <h3>📚 Katalog Buku Tersedia</h3>
+            <div class="table-wrapper">
+                <table id="bookTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Judul Buku</th>
+                            <th>Stok</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3" style="text-align:center">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const userId = localStorage.getItem('userId');
+        if (!userId) window.location.href = 'login.html';
+        document.getElementById('welcome').innerText = "NIM: " + userId;
+
+        // Inisialisasi Peta
+        var map = L.map('map').setView([-7.7956, 110.3695], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        var marker;
+
+        // Fungsi Klik Peta
+        map.on('click', function(e) {
+            updateLocationFields(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Perbaikan: Fungsi Lacak Otomatis (Geolocation API)
+        function getLocation() {
+            if (navigator.geolocation) {
+                alert("Mengakses GPS perangkat...");
+                navigator.geolocation.getCurrentPosition((position) => {
+                    updateLocationFields(position.coords.latitude, position.coords.longitude);
+                    map.setView([position.coords.latitude, position.coords.longitude], 15);
+                    alert("✅ Lokasi ditemukan!");
+                }, (error) => {
+                    alert("❌ Gagal: " + error.message);
+                });
+            } else {
+                alert("Browser tidak mendukung GPS.");
+            }
+        }
+
+        // Perbaikan: Fungsi Demo (Lokasi Kampus/Pusat)
+        function setDemoLocation() {
+            const demoLat = -7.7828; 
+            const demoLon = 110.3671;
+            updateLocationFields(demoLat, demoLon);
+            map.setView([demoLat, demoLon], 16);
+            alert("🚀 Mode Demo: Lokasi diset ke Yogyakarta.");
+        }
+
+        function updateLocationFields(lat, lon) {
+            const formattedLat = lat.toFixed(6);
+            const formattedLon = lon.toFixed(6);
+            document.getElementById('lat').value = formattedLat;
+            document.getElementById('lon').value = formattedLon;
+            
+            if (marker) marker.setLatLng([lat, lon]);
+            else marker = L.marker([lat, lon]).addTo(map);
+        }
+
+        async function loadBooks() {
+            const res = await fetch('/api/books');
+            const data = await res.json();
+            const body = document.querySelector('#bookTable tbody');
+            body.innerHTML = '';
+            data.forEach(b => {
+                const badge = b.stock > 0 ? 'stock-available' : 'stock-out';
+                body.innerHTML += `
+                    <tr>
+                        <td>${b.id}</td>
+                        <td>${b.title}</td>
+                        <td><span class="stock-badge ${badge}">${b.stock} unit</span></td>
+                    </tr>`;
+            });
+        }
+
+        async function borrowBook() {
+            const payload = {
+                bookId: document.getElementById('bookId').value,
+                latitude: document.getElementById('lat').value,
+                longitude: document.getElementById('lon').value
+            };
+
+            if (!payload.bookId || !payload.latitude) return alert('Lengkapi ID Buku dan Lokasi!');
+
+            const res = await fetch('/api/borrow', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'x-user-role': 'user', 
+                    'x-user-id': userId 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert('✅ Peminjaman Berhasil!');
+                location.reload();
+            } else {
+                const err = await res.json();
+                alert('❌ Error: ' + err.error);
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+        loadBooks();
+    </script>
+</body>
+</html>
