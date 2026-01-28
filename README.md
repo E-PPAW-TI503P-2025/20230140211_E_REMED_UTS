@@ -24,9 +24,11 @@ Detail Buku
 <img width="1352" height="862" alt="Screenshot 2026-01-28 014136" src="https://github.com/user-attachments/assets/833b5070-74ce-4eae-b71f-630db6ed6b23" />
 
 WEB
+
+
 Jalankan Code : 
 1. jalankan di terminal ketik "node index.js"
-2. hasil 🚀 Server running at http://localhost:3000
+2. hasil >>> 🚀 Server running at http://localhost:3000
 3. Klik url pada port yang berjalan saat server dinyalakan
 
 Tampilan WEB
